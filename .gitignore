@@ -29,9 +29,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .idea/
-/mvnw
-/mvnw.cmd
-.mvn/
+
 
 ### VS Code ###
 .vscode/
