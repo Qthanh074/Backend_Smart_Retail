@@ -2,6 +2,9 @@ package com.smartretail.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,6 +21,20 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private String fullName;
+
+    private String phoneNumber;
+
+    private boolean enabled = true;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
