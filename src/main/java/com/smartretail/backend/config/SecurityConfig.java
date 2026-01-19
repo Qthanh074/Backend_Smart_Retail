@@ -3,6 +3,7 @@ package com.smartretail.backend.config;
 import com.smartretail.backend.security.CustomUserDetailsService;
 import com.smartretail.backend.security.JwtAuthenticationFilter;
 import com.smartretail.backend.security.JwtTokenProvider;
+import com.smartretail.backend.service.TokenBlacklistService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,8 +40,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(tokenProvider, userDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(TokenBlacklistService blacklistService) {
+        return new JwtAuthenticationFilter(tokenProvider, userDetailsService, blacklistService);
     }
 
     @Bean
@@ -49,27 +50,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, TokenBlacklistService blacklistService) throws Exception {
         http
-                //Tích hợp CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                //Disable CSRF vì sử dụng JWT
                 .csrf(csrf -> csrf.disable())
-                //Quản lý session Stateless (không lưu session trên server)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                //Cấu hình phân quyền API
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated()
                 );
-
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(blacklistService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Cấu hình CORS để cho phép Frontend (React/Vue/Angular) gọi API
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

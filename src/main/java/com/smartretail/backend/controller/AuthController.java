@@ -6,12 +6,15 @@ import com.smartretail.backend.dto.response.ApiResponse;
 import com.smartretail.backend.dto.response.LoginResponse;
 import com.smartretail.backend.security.JwtTokenProvider;
 import com.smartretail.backend.service.AuthService;
+import com.smartretail.backend.service.TokenBlacklistService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -22,11 +25,16 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final AuthService authService;
+    private final TokenBlacklistService blacklistService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider tokenProvider, AuthService authService) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtTokenProvider tokenProvider,
+                          AuthService authService,
+                          TokenBlacklistService blacklistService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.authService = authService;
+        this.blacklistService = blacklistService;
     }
 
     @PostMapping("/login")
@@ -47,5 +55,17 @@ public class AuthController {
     public void verifyAccount(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
         authService.verifyEmail(token);
         response.sendRedirect("http://localhost:5173/login?verified=true");
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<?>> logout(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            String jwt = bearerToken.substring(7);
+            long expiryDuration = tokenProvider.getExpiryDuration(jwt);
+            blacklistService.blacklistToken(jwt, expiryDuration);
+
+            return ResponseEntity.ok(new ApiResponse<>(true, "Đăng xuất thành công", null));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Không tìm thấy token", null));
     }
 }
