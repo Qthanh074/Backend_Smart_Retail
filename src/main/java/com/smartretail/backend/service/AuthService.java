@@ -11,18 +11,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService; // Thêm EmailService
+    private final EmailService emailService;
 
     public AuthService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       EmailService emailService) { // Khởi tạo EmailService
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -30,44 +31,48 @@ public class AuthService {
     }
 
     @Transactional
-    public void register(RegisterRequest request) {
-        // 1. Kiểm tra xác nhận mật khẩu
+    public User register(RegisterRequest request) {
         if (request.getConfirmPassword() == null || !request.getPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("Mật khẩu xác nhận không khớp!");
         }
 
-        // 2. Kiểm tra email đã tồn tại hay chưa
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email này đã được sử dụng trong hệ thống!");
         }
 
-        // 3. Tạo đối tượng User và mapping thông tin từ Request
         User user = new User();
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
-
-        // 4. Mã hóa mật khẩu trước khi lưu vào cơ sở dữ liệu
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // Mặc định tài khoản được kích hoạt khi đăng ký
-        user.setEnabled(true);
+        user.setEnabled(false);
+        String token = UUID.randomUUID().toString();
+        user.setVerificationToken(token);
 
-        // 5. Gán Role mặc định là ROLE_STAFF cho người dùng tự đăng ký
         Role userRole = roleRepository.findByName(RoleName.ROLE_STAFF)
                 .orElseThrow(() -> new RuntimeException("Lỗi hệ thống: Không tìm thấy quyền mặc định (ROLE_STAFF)"));
-
         user.setRoles(Collections.singleton(userRole));
 
-        // 6. Lưu xuống database
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        // 7. Tích hợp gửi Email sau khi đăng ký thành công
         try {
-            emailService.sendRegistrationEmail(user.getEmail(), user.getFullName());
+            emailService.sendRegistrationEmail(user.getEmail(), user.getFullName(), token);
         } catch (Exception e) {
-            // Log lỗi nhưng không làm thất bại quá trình đăng ký chính
-            System.err.println("Không thể gửi email thông báo: " + e.getMessage());
+            System.err.println("Không thể gửi email xác thực: " + e.getMessage());
         }
+
+        return savedUser;
     }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Mã xác thực không hợp lệ hoặc đã hết hạn."));
+
+        user.setEnabled(true);
+        user.setVerificationToken(null);
+        userRepository.save(user);
+    }
+
 }

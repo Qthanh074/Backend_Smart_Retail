@@ -27,7 +27,10 @@ public class User {
 
     private String phoneNumber;
 
-    private boolean enabled = true;
+    private boolean enabled = false;
+
+    @Column(unique = true)
+    private String verificationToken;
 
     @CreationTimestamp
     @Column(updatable = false)

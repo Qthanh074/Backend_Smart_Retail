@@ -34,18 +34,24 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        // 2. Khởi tạo tài khoản Demo
-        createDemoUser("super@example.com", RoleName.ROLE_SUPER_ADMIN);
-        createDemoUser("admin@example.com", RoleName.ROLE_ADMIN);
-        createDemoUser("manager@example.com", RoleName.ROLE_MANAGER);
-        createDemoUser("staff@example.com", RoleName.ROLE_STAFF);
+        createDemoUser("super@example.com", RoleName.ROLE_SUPER_ADMIN, "Super Admin");
+        createDemoUser("admin@example.com", RoleName.ROLE_ADMIN, "System Admin");
+        createDemoUser("manager@example.com", RoleName.ROLE_MANAGER, "Store Manager");
+        createDemoUser("staff@example.com", RoleName.ROLE_STAFF, "Staff Member");
     }
 
-    private void createDemoUser(String email, RoleName roleName) {
+    private void createDemoUser(String email, RoleName roleName, String fullName) {
         if (userRepository.findByEmail(email).isEmpty()) {
             User user = new User();
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode("Default123!"));
+
+            user.setFullName(fullName);
+
+            user.setEnabled(true);
+
+            user.setVerificationToken(null);
+
             roleRepository.findByName(roleName).ifPresent(role -> {
                 user.setRoles(Collections.singleton(role));
                 userRepository.save(user);

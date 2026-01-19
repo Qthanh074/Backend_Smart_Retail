@@ -1,27 +1,47 @@
 package com.smartretail.backend.service;
 
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Service
 public class EmailService {
     private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
 
-    public EmailService(JavaMailSender mailSender) {
+    @Value("${app.base.url}")
+    private String baseUrl;
+
+    public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
     }
 
-    public void sendRegistrationEmail(String toEmail, String fullName) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("Smart Retail <noreply@smartretail.com>");
-        message.setTo(toEmail);
-        message.setSubject("Chào mừng bạn đến với Smart Retail!");
-        message.setText("Chào " + fullName + ",\n\n" +
-                "Chúc mừng bạn đã đăng ký tài khoản thành công tại hệ thống Smart Retail.\n" +
-                "Bây giờ bạn có thể đăng nhập và sử dụng các tính năng của chúng tôi.\n\n" +
-                "Trân trọng,\nĐội ngũ Smart Retail.");
+    public void sendRegistrationEmail(String toEmail, String fullName, String token) {
+        String verificationLink = baseUrl + "/api/auth/verify?token=" + token;
 
-        mailSender.send(message);
+        Context context = new Context();
+        context.setVariable("fullName", fullName);
+        context.setVariable("verificationLink", verificationLink);
+
+        String htmlContent = templateEngine.process("email/email-verification", context);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("Smart Retail Support <smartretail.contact@gmail.com>");
+            helper.setTo(toEmail);
+            helper.setSubject("Xác thực tài khoản Smart Retail");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Lỗi gửi email xác thực: " + e.getMessage());
+        }
     }
 }

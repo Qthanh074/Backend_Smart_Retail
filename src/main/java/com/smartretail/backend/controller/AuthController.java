@@ -6,15 +6,15 @@ import com.smartretail.backend.dto.response.ApiResponse;
 import com.smartretail.backend.dto.response.LoginResponse;
 import com.smartretail.backend.security.JwtTokenProvider;
 import com.smartretail.backend.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,7 +41,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         authService.register(registerRequest);
-        // Trả về ApiResponse thay vì String thuần túy
         return ResponseEntity.ok(new ApiResponse<>(true, "Đăng ký tài khoản thành công!", null));
+    }
+    @GetMapping("/verify")
+    public void verifyAccount(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
+        authService.verifyEmail(token);
+        response.sendRedirect("http://localhost:5173/login?verified=true");
     }
 }

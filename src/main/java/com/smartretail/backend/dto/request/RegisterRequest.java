@@ -10,10 +10,10 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Họ tên không được để trống")
-    private String fullName; // Thêm trường này
+    private String fullName;
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    private String phoneNumber; // Thêm trường này
+    private String phoneNumber;
 
     @NotBlank
     @Size(min = 8, message = "Mật khẩu phải có ít nhất 8 ký tự")
@@ -22,5 +22,5 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
-    private String confirmPassword; // Thêm trường này
+    private String confirmPassword;
 }

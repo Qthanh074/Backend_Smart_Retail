@@ -51,20 +51,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Tích hợp CORS
+                //Tích hợp CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 2. Disable CSRF vì sử dụng JWT
+                //Disable CSRF vì sử dụng JWT
                 .csrf(csrf -> csrf.disable())
-                // 3. Quản lý session Stateless (không lưu session trên server)
+                //Quản lý session Stateless (không lưu session trên server)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 4. Cấu hình phân quyền API
+                //Cấu hình phân quyền API
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Cho phép đăng ký/đăng nhập công khai
-                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN") // Chỉ Super Admin mới có quyền vào
-                        .anyRequest().authenticated() // Tất cả các request khác phải đăng nhập
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+                        .anyRequest().authenticated()
                 );
 
-        // 5. Thêm Filter kiểm tra JWT trước filter xác thực mặc định
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -75,16 +74,12 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Cho phép các nguồn (Origins) - Trong thực tế nên thay "*" bằng địa chỉ cụ thể của Frontend
         configuration.setAllowedOrigins(Collections.singletonList("*"));
 
-        // Cho phép các phương thức HTTP
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        // Cho phép các Headers
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
 
-        // Cho phép gửi kèm Credentials (như Cookies hoặc Auth Headers)
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

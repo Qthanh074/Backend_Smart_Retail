@@ -13,13 +13,11 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Xử lý lỗi nghiệp vụ chung (RuntimeException)
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<?>> handleRuntimeException(RuntimeException e) {
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
     }
 
-    // Xử lý lỗi Validation (MethodArgumentNotValidException)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -29,7 +27,6 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        // Trả về ApiResponse với danh sách các trường bị lỗi
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Dữ liệu không hợp lệ", errors));
     }
 }
