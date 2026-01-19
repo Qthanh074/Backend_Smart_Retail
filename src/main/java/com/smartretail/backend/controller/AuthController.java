@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
-    private final AuthService authService; // Thêm service xử lý đăng ký
+    private final AuthService authService;
 
     public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider tokenProvider, AuthService authService) {
         this.authenticationManager = authenticationManager;
@@ -39,8 +39,9 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResponse<?>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         authService.register(registerRequest);
-        return ResponseEntity.ok("Đăng ký tài khoản thành công!");
+        // Trả về ApiResponse thay vì String thuần túy
+        return ResponseEntity.ok(new ApiResponse<>(true, "Đăng ký tài khoản thành công!", null));
     }
 }
