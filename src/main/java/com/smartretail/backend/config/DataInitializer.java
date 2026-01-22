@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        createDemoUser("super@example.com", RoleName.ROLE_SUPER_ADMIN, "Super Admin");
+
         createDemoUser("admin@example.com", RoleName.ROLE_ADMIN, "System Admin");
         createDemoUser("manager@example.com", RoleName.ROLE_MANAGER, "Store Manager");
         createDemoUser("staff@example.com", RoleName.ROLE_STAFF, "Staff Member");
